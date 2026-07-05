@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Importliya | حاسبة تكلفة الاستيراد من الصين إلى المغرب</title>
+
+<!-- خطوط عربية احترافية: تجوال للعناوين + IBM Plex Sans Arabic للنصوص + JetBrains Mono للأرقام -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ===========================================================
+   1) المتغيرات العامة (Design Tokens)
+   =========================================================== */
+:root{
+  --bg:#F4F8FA;
+  --surface:#FFFFFF;
+  --ink:#122438;
+  --ink-soft:#4C6478;
+  --border:#DCE7EE;
+  --blue:#1B5E86;
+  --blue-deep:#0C3652;
+  --blue-mist:#EAF3F8;
+  --green:#0E9F6E;
+  --green-deep:#07724F;
+  --green-mist:#E6F8F1;
+  --gold:#B9852F;
+  --gold-mist:#FBF1DF;
+  --red:#D6483F;
+  --red-mist:#FCEBEA;
+  --radius:16px;
+  --shadow: 0 8px 24px -8px rgba(12,54,82,0.14);
+  --shadow-lg: 0 20px 48px -16px rgba(12,54,82,0.28);
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:
+    radial-gradient(1200px 600px at 90% -10%, rgba(27,94,134,0.08), transparent),
+    radial-gradient(900px 500px at -10% 10%, rgba(14,159,110,0.06), transparent),
+    var(--bg);
+  color:var(--ink);
+  font-family:'IBM Plex Sans Arabic', 'Tajawal', sans-serif;
+  line-height:1.6;
+}
+
+.mono{font-family:'JetBrains Mono','IBM Plex Sans Arabic',monospace; direction:ltr; unicode-bidi:isolate;}
+
+/* ===========================================================
+   2) الرأس (Header) + طريق الشحن (Signature Element)
+   =========================================================== */
+.topbar{
+  background: linear-gradient(135deg, var(--blue-deep), var(--blue) 70%);
+  color:#fff;
+  padding:38px 20px 26px;
+  border-radius:0 0 28px 28px;
+  box-shadow:var(--shadow-lg);
+}
+.topbar-inner{max-width:1180px;margin:0 auto;}
+.brand-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.logo-pill{display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.14);
+  border:1px solid rgba(255,255,255,0.28); padding:8px 16px 8px 10px; border-radius:100px;}
+.logo-mark{width:28px; height:28px; border-radius:9px; background:linear-gradient(135deg,var(--green),#35D08F);
+  display:flex; align-items:center; justify-content:center; font-weight:900; font-family:'Tajawal'; font-size:14px; color:#04331f;}
+.logo-pill b{font-family:'Tajawal'; font-weight:800; font-size:15px; letter-spacing:.3px;}
+.brand-tag{
+  font-family:'Tajawal';font-weight:700;font-size:13px;letter-spacing:.5px;
+  background:rgba(255,255,255,0.12); padding:6px 14px;border-radius:100px;
+  border:1px solid rgba(255,255,255,0.25);
+}
+h1.title{
+  font-family:'Tajawal';font-weight:900;font-size:clamp(24px,4vw,38px);
+  margin:16px 0 6px; letter-spacing:.2px;
+}
+p.subtitle{margin:0 0 22px; color:rgba(255,255,255,0.82); font-size:15.5px;}
+
+/* طريق الشحن: خط يمتد من الصين إلى المغرب مع سفينة تتحرك حسب نسبة الإنجاز */
+.route{
+  position:relative; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
+  border-radius:100px; padding:14px 22px; display:flex; align-items:center; gap:14px;
+}
+.route .flag{font-size:20px;}
+.route-track{
+  position:relative; flex:1; height:6px; background:rgba(255,255,255,0.22); border-radius:10px; overflow:visible;
+}
+.route-fill{
+  position:absolute; inset-inline-start:0; top:0; height:100%; width:0%;
+  background:linear-gradient(90deg, var(--green), #35D08F);
+  border-radius:10px; transition:width .5s cubic-bezier(.4,0,.2,1);
+}
+.route-ship{
+  position:absolute; top:50%; transform:translate(50%,-50%); inset-inline-start:0%;
+  font-size:20px; transition:inset-inline-start .5s cubic-bezier(.4,0,.2,1);
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,0.35));
+}
+.route-pct{font-family:'JetBrains Mono'; font-weight:600; font-size:13px; min-width:44px; text-align:center; direction:ltr;}
+
+/* ===========================================================
+   3) التخطيط العام
+   =========================================================== */
+.layout{
+  max-width:1180px; margin:0 auto; padding:26px 20px 80px;
+  display:grid; grid-template-columns: 1fr; gap:20px;
+}
+@media(min-width:1020px){
+  .layout{grid-template-columns: 1fr 340px; align-items:start;}
+}
+
+/* ===========================================================
+   4) البطاقات (Stage Cards)
+   =========================================================== */
+.stage{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  box-shadow:var(--shadow); overflow:hidden; scroll-margin-top:110px;
+}
+.stage-head{
+  display:flex; align-items:center; gap:14px; padding:18px 20px; cursor:pointer; user-select:none;
+  background:linear-gradient(180deg, #fff, #FBFDFE);
+}
+.stage-num{
+  width:38px;height:38px;border-radius:11px; display:flex;align-items:center;justify-content:center;
+  background:var(--blue-mist); color:var(--blue); font-family:'JetBrains Mono'; font-weight:700; font-size:15px;
+  flex-shrink:0; transition:background .25s, color .25s;
+}
+.stage.done .stage-num{background:var(--green-mist); color:var(--green-deep);}
+.stage-icon{font-size:20px;}
+.stage-titles{flex:1; min-width:0;}
+.stage-titles h3{margin:0; font-family:'Tajawal'; font-weight:700; font-size:16.5px;}
+.stage-titles span{font-size:12.5px; color:var(--ink-soft);}
+.stage-check{
+  width:26px;height:26px;border-radius:50%; border:2px solid var(--border); flex-shrink:0;
+  display:flex;align-items:center;justify-content:center; font-size:13px; color:transparent; transition:.25s;
+}
+.stage.done .stage-check{background:var(--green); border-color:var(--green); color:#fff;}
+.chevron{transition:transform .25s; color:var(--ink-soft); font-size:14px;}
+.stage.collapsed .chevron{transform:rotate(180deg);}
+
+.stage-body{
+  padding:6px 20px 22px; display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  transition:grid-template-rows .3s ease;
+}
+.stage.collapsed .stage-body{display:none;}
+.stage-total-row{
+  grid-column:1/-1; display:flex; justify-content:space-between; align-items:center;
+  background:var(--blue-mist); border-radius:12px; padding:12px 16px; margin-top:4px;
+}
+.stage-total-row b{font-family:'JetBrains Mono'; color:var(--blue-deep); font-size:16px;}
+
+.field{display:flex; flex-direction:column; gap:6px;}
+.field.full{grid-column:1/-1;}
+.field label{font-size:13px; color:var(--ink-soft); font-weight:500;}
+.field input, .field select{
+  border:1.5px solid var(--border); border-radius:10px; padding:11px 13px; font-size:14.5px;
+  font-family:inherit; background:#fff; color:var(--ink); transition:border-color .2s, box-shadow .2s;
+}
+.field input:focus, .field select:focus{
+  outline:none; border-color:var(--blue); box-shadow:0 0 0 4px rgba(27,94,134,0.12);
+}
+.field input.alert{border-color:var(--red); background:var(--red-mist);}
+.field-hint{font-size:11.5px; color:var(--red); display:none;}
+.field-hint.show{display:block;}
+.field-desc{font-size:11.5px; color:var(--ink-soft); line-height:1.5; margin-top:2px;}
+.stage-note{grid-column:1/-1; font-size:12px; color:var(--ink-soft); background:var(--blue-mist); border-radius:10px; padding:10px 14px; line-height:1.9;}
+
+.radio-row{display:flex; gap:10px; grid-column:1/-1; flex-wrap:wrap;}
+.radio-chip{
+  border:1.5px solid var(--border); border-radius:10px; padding:10px 16px; cursor:pointer;
+  font-size:14px; font-weight:500; transition:.2s; display:flex; align-items:center; gap:8px;
+}
+.radio-chip input{accent-color:var(--blue); margin:0;}
+.radio-chip.active{border-color:var(--blue); background:var(--blue-mist); color:var(--blue-deep);}
+
+/* ===========================================================
+   5) اللوحة الجانبية اللاصقة (Live Summary)
+   =========================================================== */
+.side-sticky{position:sticky; top:20px; display:flex; flex-direction:column; gap:16px;}
+.summary-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:22px;
+}
+.summary-card h4{margin:0 0 14px; font-family:'Tajawal'; font-size:15px; color:var(--ink-soft);}
+.summary-line{display:flex; justify-content:space-between; font-size:13.5px; padding:7px 0; border-bottom:1px dashed var(--border);}
+.summary-line span:last-child{font-family:'JetBrains Mono'; font-weight:600;}
+.summary-line.muted{color:var(--ink-soft);}
+.summary-final{
+  margin-top:14px; background:linear-gradient(135deg, var(--green-deep), var(--green));
+  color:#fff; border-radius:14px; padding:18px; text-align:center;
+}
+.summary-final small{opacity:.85; font-size:12px;}
+.summary-final .val{font-family:'JetBrains Mono'; font-size:24px; font-weight:700; margin-top:4px;}
+
+.progress-mini{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px 20px;}
+.progress-mini .bar{height:8px; background:var(--blue-mist); border-radius:20px; overflow:hidden; margin-top:10px;}
+.progress-mini .bar i{display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--blue),var(--green)); transition:width .4s;}
+
+.btns-side{display:flex; flex-direction:column; gap:10px;}
+button.action{
+  border:none; border-radius:12px; padding:13px 16px; font-family:'Tajawal'; font-weight:700; font-size:14.5px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:.2s;
+}
+button.action.primary{background:var(--blue); color:#fff;}
+button.action.primary:hover{background:var(--blue-deep); transform:translateY(-2px); box-shadow:0 8px 20px -6px rgba(27,94,134,0.5);}
+button.action.ghost{background:var(--blue-mist); color:var(--blue-deep);}
+button.action.ghost:hover{background:#dcecf3;}
+button.action.danger{background:var(--red-mist); color:var(--red);}
+button.action.danger:hover{background:#f8d9d6;}
+
+/* ===========================================================
+   6) البطاقة النهائية الكبيرة (Final Price - bottom of page)
+   =========================================================== */
+.final-section{
+  grid-column:1/-1; background:linear-gradient(160deg, var(--blue-deep), #0A2C42 60%);
+  border-radius:24px; padding:36px 28px; color:#fff; box-shadow:var(--shadow-lg); position:relative; overflow:hidden;
+}
+.final-section::before{
+  content:""; position:absolute; inset:0; opacity:.08; background:
+  repeating-linear-gradient(135deg, #fff 0 2px, transparent 2px 40px);
+}
+.final-head{position:relative; text-align:center; margin-bottom:26px;}
+.final-head h2{font-family:'Tajawal'; font-weight:900; font-size:22px; margin:0 0 6px;}
+.final-head p{margin:0; color:rgba(255,255,255,0.7); font-size:13.5px;}
+
+.final-grid{position:relative; display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); margin-bottom:22px;}
+.final-item{
+  background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); border-radius:14px; padding:14px 16px;
+}
+.final-item span{display:block; font-size:12.5px; color:rgba(255,255,255,0.65); margin-bottom:6px;}
+.final-item b{font-family:'JetBrains Mono'; font-size:16px;}
+
+.divider-line{border:none; border-top:1px dashed rgba(255,255,255,0.25); margin:20px 0; position:relative;}
+
+.final-big{position:relative; text-align:center;}
+.final-big .label{font-family:'Tajawal'; font-weight:700; font-size:16px; color:rgba(255,255,255,0.85); margin-bottom:8px;}
+.final-big .amount{
+  font-family:'JetBrains Mono'; font-weight:700; font-size:clamp(32px,6vw,54px); color:#3FE0A0;
+  text-shadow:0 0 30px rgba(63,224,160,0.35);
+}
+.per-unit-row{
+  position:relative; display:flex; justify-content:center; gap:40px; flex-wrap:wrap; margin-top:22px;
+}
+.per-unit-row .box{text-align:center;}
+.per-unit-row .box span{display:block; font-size:12.5px; color:rgba(255,255,255,0.65); margin-bottom:4px;}
+.per-unit-row .box b{font-family:'JetBrains Mono'; font-size:19px;}
+
+.final-actions{position:relative; display:flex; gap:12px; justify-content:center; margin-top:28px; flex-wrap:wrap;}
+.final-actions button{
+  border:none; border-radius:12px; padding:13px 22px; font-family:'Tajawal'; font-weight:700; font-size:14px;
+  cursor:pointer; display:flex; align-items:center; gap:8px; transition:.2s;
+}
+.final-actions .fa-print{background:#fff; color:var(--blue-deep);}
+.final-actions .fa-print:hover{transform:translateY(-2px); box-shadow:0 10px 22px -8px rgba(0,0,0,0.4);}
+.final-actions .fa-pdf{background:var(--green); color:#fff;}
+.final-actions .fa-pdf:hover{background:var(--green-deep); transform:translateY(-2px);}
+.final-actions .fa-excel{background:#1D7044; color:#fff;}
+.final-actions .fa-excel:hover{background:#155A34; transform:translateY(-2px);}
+.final-actions .fa-reset{background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.3);}
+.final-actions .fa-reset:hover{background:rgba(255,255,255,0.2);}
+
+/* شارة عائمة تظهر أثناء التمرير بالسعر الحالي وتقود للأسفل */
+.floating-total{
+  position:fixed; bottom:20px; inset-inline-end:20px; z-index:50;
+  background:var(--green-deep); color:#fff; border-radius:100px; padding:12px 20px;
+  box-shadow:0 12px 30px -8px rgba(7,114,79,0.55); display:flex; align-items:center; gap:10px;
+  cursor:pointer; font-family:'Tajawal'; font-weight:700; font-size:13.5px; opacity:0; transform:translateY(20px);
+  transition:.3s; pointer-events:none;
+}
+.floating-total.show{opacity:1; transform:translateY(0); pointer-events:auto;}
+.floating-total b{font-family:'JetBrains Mono'; font-size:15px;}
+
+footer.foot{text-align:center; color:var(--ink-soft); font-size:12px; padding:20px; grid-column:1/-1;}
+
+@media print{
+  .topbar, .side-sticky, .stage-head .chevron, .final-actions, .floating-total{display:none !important;}
+  body{background:#fff;}
+  .stage{box-shadow:none; break-inside:avoid;}
+  .layout{grid-template-columns:1fr; padding:0;}
+  .final-section{color:#000; background:#fff; border:2px solid #0C3652;}
+  .final-section::before{display:none;}
+  .final-big .amount{color:var(--green-deep); text-shadow:none;}
+  .final-item{background:#F4F8FA; border-color:#ccc; color:#000;}
+  .final-item span{color:#555;}
+  .final-head p{color:#555;}
+  .per-unit-row span, .final-head p, .final-big .label{color:#333 !important;}
+}
+</style>
+</head>
+<body>
+
+<!-- ===========================================================
+     الرأس: العنوان + طريق الشحن التفاعلي (يوضح نسبة إكمال البيانات)
+     =========================================================== -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand-row">
+      <div class="logo-pill"><div class="logo-mark">IL</div><b>Importliya</b></div>
+      <span class="brand-tag" id="live-clock">حاسبة احترافية</span>
+    </div>
+    <h1 class="title">حاسبة تكلفة الاستيراد من الصين إلى المغرب</h1>
+    <p class="subtitle">أدخل جميع التكاليف وسيتم احتساب السعر النهائي تلقائياً حتى باب منزل الزبون.</p>
+
+    <div class="route">
+      <span class="flag">🇨🇳</span>
+      <div class="route-track">
+        <div class="route-fill" id="routeFill"></div>
+        <div class="route-ship" id="routeShip">🚢</div>
+      </div>
+      <span class="flag">🇲🇦</span>
+      <span class="route-pct" id="routePct">0%</span>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ============================================================
+       المرحلة 1: معلومات المنتج
+       ============================================================ -->
+  <div class="main-col" style="display:flex; flex-direction:column; gap:18px;">
+
+  <!-- ============================================================
+       المرحلة 1: معلومات الزبون
+       ============================================================ -->
+  <section class="stage" id="stage1" data-stage="1">
+    <div class="stage-head" onclick="toggleStage('stage1')">
+      <div class="stage-num">01</div>
+      <span class="stage-icon">🧑‍💼</span>
+      <div class="stage-titles"><h3>معلومات الزبون</h3><span>اسم الزبون ووسائل التواصل</span></div>
+      <div class="stage-check">✓</div>
+      <div class="chevron">▲</div>
+    </div>
+    <div class="stage-body">
+      <div class="field">
+        <label>اسم الزبون</label>
+        <input type="text" id="cu-name" placeholder="مثال: محمد العلوي" oninput="markRequired(this)">
+        <span class="field-hint">اسم الزبون مطلوب</span>
+      </div>
+      <div class="field"><label>رقم الهاتف</label><input type="text" id="cu-phone" placeholder="06XXXXXXXX"></div>
+      <div class="field"><label>المدينة</label><input type="text" id="cu-city" placeholder="مثال: فاس"></div>
+      <div class="field full"><label>العنوان الكامل</label><input type="text" id="cu-address" placeholder="العنوان التفصيلي للتوصيل"></div>
+    </div>
+  </section>
+
+  <section class="stage" id="stage2" data-stage="2">
+    <div class="stage-head" onclick="toggleStage('stage2')">
+      <div class="stage-num">02</div>
+      <span class="stage-icon">📦</span>
+      <div class="stage-titles"><h3>معلومات المنتج</h3><span>بيانات المنتج والمورد وسعر الصرف</span></div>
+      <div class="stage-check">✓</div>
+      <div class="chevron">▲</div>
+    </div>
+    <div class="stage-body">
+      <div class="field"><label>اسم المنتج</label><input type="text" id="p-name" placeholder="مثال: سماعات لاسلكية"></div>
+      <div class="field"><label>رابط المنتج</label><input type="text" id="p-link" placeholder="https://..."></div>
+      <div class="field"><label>اسم المورد</label><input type="text" id="p-supplier" placeholder="اسم المورد الصيني"></div>
+      <div class="field"><label>مدينة المورد</label><input type="text" id="p-city" placeholder="مثال: قوانغتشو"></div>
+      <div class="field">
+        <label>الكمية</label>
+        <input type="number" id="p-qty" min="0" placeholder="0" oninput="markRequired(this)">
+        <span class="field-hint">الكمية مطلوبة لإتمام الحساب</span>
+      </div>
+      <div class="field">
+        <label>سعر الوحدة</label>
+        <input type="number" id="p-unitprice" min="0" step="0.01" placeholder="0.00" oninput="markRequired(this)">
+        <span class="field-hint">سعر الوحدة مطلوب لإتمام الحساب</span>
+      </div>
+      <div class="field">
+        <label>العملة</label>
+        <select id="p-currency">
+          <option value="CNY">يوان صيني (CNY)</option>
+          <option value="USD">دولار أمريكي (USD)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>سعر الصرف إلى الدرهم المغربي</label>
+        <input type="number" id="p-rate" min="0" step="0.0001" placeholder="0.0000" oninput="markRequired(this)">
+        <span class="field-hint">سعر الصرف مطلوب لإتمام الحساب</span>
+      </div>
+
+      <div class="stage-total-row">
+        <span>إجمالي قيمة المنتج (بالعملة الأصلية / بالدرهم)</span>
+        <b><span id="p-total-orig" class="mono">0.00</span> &nbsp;≈&nbsp; <span id="p-total-mad" class="mono">0.00</span> د.م.</b>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       المرحلة 2: تكاليف داخل الصين
+       ============================================================ -->
+  <section class="stage" id="stage3" data-stage="3">
+    <div class="stage-head" onclick="toggleStage('stage3')">
+      <div class="stage-num">03</div>
+      <span class="stage-icon">🏭</span>
+      <div class="stage-titles"><h3>تكاليف داخل الصين</h3><span>النقل الداخلي، التغليف، الفحص والعمولات</span></div>
+      <div class="stage-check">✓</div>
+      <div class="chevron">▲</div>
+    </div>
+    <div class="stage-body">
+      <div class="field"><label>النقل الداخلي (د.م.)</label><input type="number" min="0" id="c-transport" placeholder="0.00"></div>
+      <div class="field"><label>التغليف (د.م.)</label><input type="number" min="0" id="c-packaging" placeholder="0.00"></div>
+      <div class="field"><label>إعادة التغليف (د.م.)</label><input type="number" min="0" id="c-repackaging" placeholder="0.00"></div>
+      <div class="field"><label>التخزين (د.م.)</label><input type="number" min="0" id="c-storage" placeholder="0.00"></div>
+      <div class="field"><label>فحص الجودة (د.م.)</label><input type="number" min="0" id="c-qc" placeholder="0.00"></div>
+      <div class="field"><label>عمولة المورد (د.م.)</label><input type="number" min="0" id="c-commission" placeholder="0.00"></div>
+      <div class="field"><label>مصاريف أخرى (د.م.)</label><input type="number" min="0" id="c-other" placeholder="0.00"></div>
+      <div class="stage-total-row"><span>إجمالي تكاليف الصين</span><b><span id="c-total" class="mono">0.00</span> د.م.</b></div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       المرحلة 3: الشحن الدولي
+       ============================================================ -->
+  <section class="stage" id="stage4" data-stage="4">
+    <div class="stage-head" onclick="toggleStage('stage4')">
+      <div class="stage-num">04</div>
+      <span class="stage-icon">🚢</span>
+      <div class="stage-titles"><h3>الشحن الدولي</h3><span>نوع الشحن، الوزن، الحجم والتأمين</span></div>
+      <div class="stage-check">✓</div>
+      <div class="chevron">▲</div>
+    </div>
+    <div class="stage-body">
+      <div class="radio-row" id="shipTypeRow">
+        <label class="radio-chip active"><input type="radio" name="shipType" value="بحري" checked> بحري</label>
+        <label class="radio-chip"><input type="radio" name="shipType" value="جوي"> جوي</label>
+        <label class="radio-chip"><input type="radio" name="shipType" value="سريع"> سريع</label>
+      </div>
+      <div class="field">
+        <label>الوزن (كغ)</label>
+        <input type="number" min="0" id="s-weight" placeholder="0.00">
+        <span class="field-desc">الوزن الإجمالي للشحنة — يُعتمد لتسعير الشحن الجوي والسريع (السعر عادة لكل كيلوغرام).</span>
+      </div>
+      <div class="field">
+        <label>الحجم CBM</label>
+        <input type="number" min="0" step="0.001" id="s-volume" placeholder="0.000">
+        <span class="field-desc">الحجم بالمتر المكعب — يُعتمد لتسعير الشحن البحري (السعر عادة لكل CBM، أو بحسب "الوزن الحجمي" إن كان أكبر من الوزن الفعلي).</span>
+      </div>
+      <div class="field">
+        <label>تكلفة الشحن (د.م.)</label>
+        <input type="number" min="0" id="s-cost" placeholder="0.00">
+        <span class="field-desc">المبلغ الذي يتقاضاه الناقل (Freight) مقابل نقل البضاعة فعلياً من الصين إلى ميناء الدخول بالمغرب.</span>
+      </div>
+      <div class="field">
+        <label>التأمين (د.م.)</label>
+        <input type="number" min="0" id="s-insurance" placeholder="0.00">
+        <span class="field-desc">تأمين البضاعة ضد الفقدان أو التلف أثناء النقل — عادة ما بين 0.3% و1% من قيمة البضاعة.</span>
+      </div>
+      <div class="field">
+        <label>رسوم الوثائق (د.م.)</label>
+        <input type="number" min="0" id="s-docs" placeholder="0.00">
+        <span class="field-desc">تكاليف إعداد مستندات الشحن (سند الشحن Bill of Lading، الفاتورة، قائمة التعبئة، إلخ).</span>
+      </div>
+      <div class="field">
+        <label>رسوم شركة الشحن (د.م.)</label>
+        <input type="number" min="0" id="s-companyfees" placeholder="0.00">
+        <span class="field-desc">عمولة الوسيط اللوجستي أو وكيل الشحن (Freight Forwarder) مقابل تنسيق العملية.</span>
+      </div>
+      <div class="field">
+        <label>رسوم إضافية (د.م.)</label>
+        <input type="number" min="0" id="s-extra" placeholder="0.00">
+        <span class="field-desc">أي رسوم طارئة أو موسمية (رسوم الوقود، رسوم الذروة، رسوم تخزين مؤقت في ميناء الشحن، إلخ).</span>
+      </div>
+      <div class="stage-note">
+        <b>طريقة الحساب:</b> إجمالي الشحن الدولي = تكلفة الشحن + التأمين + رسوم الوثائق + رسوم شركة الشحن + رسوم إضافية.
+        (الوزن والحجم لا يُضافان مباشرة للمجموع، بل يُستخدمان كمرجع لتحديد "تكلفة الشحن" حسب نوع الشحن المختار).
+      </div>
+      <div class="stage-total-row"><span>إجمالي تكلفة الشحن الدولي</span><b><span id="s-total" class="mono">0.00</span> د.م.</b></div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       المرحلة 4: الجمارك المغربية
+       ============================================================ -->
+  <section class="stage" id="stage5" data-stage="5">
+    <div class="stage-head" onclick="toggleStage('stage5')">
+      <div class="stage-num">05</div>
+      <span class="stage-icon">🛃</span>
+      <div class="stage-titles"><h3>الجمارك المغربية</h3><span>الرسوم الجمركية، TVA ورسوم الميناء</span></div>
+      <div class="stage-check">✓</div>
+      <div class="chevron">▲</div>
+    </div>
+    <div class="stage-body">
+      <div class="field">
+        <label>نسبة الرسوم الجمركية %</label>
+        <input type="number" min="0" id="d-dutyrate" placeholder="0.00">
+        <span class="field-desc">نسبة "الرسم الجمركي" (Droit d'Importation) حسب كود التعريفة الجمركية (HS Code) الخاص بالمنتج.</span>
+      </div>
+      <div class="field">
+        <label>نسبة TVA %</label>
+        <input type="number" min="0" id="d-tvarate" placeholder="0.00">
+        <span class="field-desc">ضريبة القيمة المضافة على الاستيراد — غالباً 20% في المغرب لمعظم المنتجات.</span>
+      </div>
+      <div class="field">
+        <label>رسوم التخليص الجمركي (د.م.)</label>
+        <input type="number" min="0" id="d-clearance" placeholder="0.00">
+        <span class="field-desc">أتعاب المصرّح الجمركي المعتمد (العبّار) مقابل إنجاز إجراءات التخليص.</span>
+      </div>
+      <div class="field">
+        <label>رسوم الميناء (د.م.)</label>
+        <input type="number" min="0" id="d-port" placeholder="0.00">
+        <span class="field-desc">رسوم مناولة وتفريغ الحاويات/الطرود في الميناء أو المطار.</span>
+      </div>
+      <div class="field">
+        <label>رسوم التخزين (د.م.)</label>
+        <input type="number" min="0" id="d-storage" placeholder="0.00">
+        <span class="field-desc">تكلفة تخزين البضاعة داخل الميناء أثناء انتظار التخليص.</span>
+      </div>
+      <div class="field">
+        <label>رسوم الفحص (د.م.)</label>
+        <input type="number" min="0" id="d-inspection" placeholder="0.00">
+        <span class="field-desc">رسوم الفحص الجمركي أو المخبري إن طُلب (مثل الفحص الصحي أو فحص المطابقة).</span>
+      </div>
+      <div class="field">
+        <label>رسوم أخرى (د.م.)</label>
+        <input type="number" min="0" id="d-other" placeholder="0.00">
+        <span class="field-desc">أي رسوم إضافية غير مصنّفة أعلاه.</span>
+      </div>
+      <div class="stage-note">
+        <b>طريقة الحساب (حسب القانون الجمركي المغربي):</b><br>
+        1) القيمة الجمركية (CIF) = قيمة المنتج بالدرهم + إجمالي الشحن الدولي.<br>
+        2) الرسوم الجمركية = القيمة الجمركية × نسبة الرسوم الجمركية %.<br>
+        3) وعاء TVA = القيمة الجمركية + الرسوم الجمركية، ثم TVA = هذا الوعاء × نسبة TVA % (عادة 20%).<br>
+        4) إجمالي الرسوم الجمركية = الرسوم الجمركية + TVA + (التخليص + الميناء + التخزين + الفحص + أخرى).
+      </div>
+      <div class="stage-total-row"><span>إجمالي الرسوم الجمركية</span><b><span id="d-total" class="mono">0.00</span> د.م.</b></div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       المرحلة 5: النقل داخل المغرب
+       ============================================================ -->
+  <section class="stage" id="stage6" data-stage="6">
+    <div class="stage-head" onclick="toggleStage('stage6')">
+      <div class="stage-num">06</div>
+      <span class="stage-icon">🚚</span>
+      <div class="stage-titles"><h3>النقل داخل المغرب</h3><span>من الميناء إلى باب منزل الزبون</span></div>
+      <div class="stage-check">✓</div>
+      <div class="chevron">▲</div>
+    </div>
+    <div class="stage-body">
+      <div class="field"><label>النقل من الميناء (د.م.)</label><input type="number" min="0" id="t-port" placeholder="0.00"></div>
+      <div class="field"><label>التخزين (د.م.)</label><input type="number" min="0" id="t-storage" placeholder="0.00"></div>
+      <div class="field"><label>إعادة التغليف (د.م.)</label><input type="number" min="0" id="t-repack" placeholder="0.00"></div>
+      <div class="field"><label>التوصيل إلى منزل الزبون (د.م.)</label><input type="number" min="0" id="t-delivery" placeholder="0.00"></div>
+      <div class="field"><label>مصاريف أخرى (د.م.)</label><input type="number" min="0" id="t-other" placeholder="0.00"></div>
+      <div class="stage-total-row"><span>إجمالي النقل داخل المغرب</span><b><span id="t-total" class="mono">0.00</span> د.م.</b></div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       المرحلة 6: الربح
+       ============================================================ -->
+  <section class="stage" id="stage7" data-stage="7">
+    <div class="stage-head" onclick="toggleStage('stage7')">
+      <div class="stage-num">07</div>
+      <span class="stage-icon">💰</span>
+      <div class="stage-titles"><h3>الربح</h3><span>نسبة مئوية أو مبلغ ثابت</span></div>
+      <div class="stage-check">✓</div>
+      <div class="chevron">▲</div>
+    </div>
+    <div class="stage-body">
+      <div class="radio-row" id="profitTypeRow">
+        <label class="radio-chip active"><input type="radio" name="profitType" value="percent" checked> نسبة %</label>
+        <label class="radio-chip"><input type="radio" name="profitType" value="fixed"> مبلغ ثابت</label>
+      </div>
+      <div class="field"><label id="profitLabel">نسبة الربح %</label><input type="number" min="0" id="pr-value" placeholder="0.00"></div>
+      <div class="stage-note">يُحسب الربح على المجموع الفرعي لكل المراحل السابقة: قيمة المنتج + تكاليف الصين + الشحن الدولي + الجمارك + النقل داخل المغرب.</div>
+      <div class="stage-total-row"><span>الربح المحتسب</span><b><span id="pr-total" class="mono">0.00</span> د.م.</b></div>
+    </div>
+  </section>
+
+  </div><!-- end main-col -->
+
+  <!-- ============================================================
+       اللوحة الجانبية: ملخص حي + شريط التقدم + الأزرار
+       ============================================================ -->
+  <aside class="side-sticky">
+    <div class="progress-mini">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <b style="font-family:'Tajawal'; font-size:14px;">نسبة إكمال البيانات</b>
+        <span class="mono" id="progressText">0%</span>
+      </div>
+      <div class="bar"><i id="progressBar"></i></div>
+    </div>
+
+    <div class="summary-card">
+      <h4>ملخص مباشر</h4>
+      <div class="summary-line"><span>قيمة المنتج</span><span id="sum-product">0.00</span></div>
+      <div class="summary-line"><span>تكاليف الصين</span><span id="sum-china">0.00</span></div>
+      <div class="summary-line"><span>الشحن الدولي</span><span id="sum-ship">0.00</span></div>
+      <div class="summary-line"><span>الجمارك</span><span id="sum-customs">0.00</span></div>
+      <div class="summary-line"><span>النقل بالمغرب</span><span id="sum-local">0.00</span></div>
+      <div class="summary-line muted"><span>المجموع الفرعي</span><span id="sum-subtotal">0.00</span></div>
+      <div class="summary-line"><span>الربح</span><span id="sum-profit">0.00</span></div>
+
+      <div class="summary-final">
+        <small id="sum-customer-label">السعر النهائي حتى باب المنزل</small>
+        <div class="val mono" id="sum-final">0.00 د.م.</div>
+      </div>
+    </div>
+
+    <div class="btns-side">
+      <button class="action primary" onclick="scrollToFinal()">↓ الانتقال إلى السعر النهائي</button>
+      <button class="action ghost" onclick="printQuote()">🖨️ طباعة عرض السعر</button>
+      <button class="action ghost" onclick="savePDF()">📄 حفظ كملف PDF</button>
+      <button class="action ghost" onclick="exportExcel()">📊 تحميل كملف Excel</button>
+      <button class="action danger" onclick="resetAll()">↺ إعادة تعيين</button>
+    </div>
+  </aside>
+
+  <!-- ============================================================
+       البطاقة النهائية الكبيرة (أسفل الصفحة كما هو مطلوب)
+       ============================================================ -->
+  <section class="final-section" id="finalSection">
+    <div class="final-head">
+      <div style="font-family:'Tajawal'; font-weight:800; font-size:12.5px; letter-spacing:1.5px; color:#3FE0A0; text-transform:uppercase; margin-bottom:6px;">IMPORTLIYA</div>
+      <h2>السعر النهائي</h2>
+      <p id="final-product-name">أدخل بيانات المنتج لعرض ملخص التكلفة الكامل</p>
+    </div>
+
+    <div class="final-grid">
+      <div class="final-item"><span>✅ تكلفة المنتج</span><b id="fg-product" class="mono">0.00 د.م.</b></div>
+      <div class="final-item"><span>✅ تكاليف الصين</span><b id="fg-china" class="mono">0.00 د.م.</b></div>
+      <div class="final-item"><span>✅ الشحن الدولي</span><b id="fg-ship" class="mono">0.00 د.م.</b></div>
+      <div class="final-item"><span>✅ الجمارك</span><b id="fg-customs" class="mono">0.00 د.م.</b></div>
+      <div class="final-item"><span>✅ النقل داخل المغرب</span><b id="fg-local" class="mono">0.00 د.م.</b></div>
+      <div class="final-item"><span>✅ الربح</span><b id="fg-profit" class="mono">0.00 د.م.</b></div>
+    </div>
+
+    <hr class="divider-line">
+
+    <div class="final-big">
+      <div class="label" id="final-customer-label">السعر النهائي حتى باب منزل الزبون</div>
+      <div class="amount mono" id="finalAmount">0.00 د.م.</div>
+    </div>
+
+    <div class="per-unit-row">
+      <div class="box"><span>تكلفة القطعة الواحدة</span><b class="mono" id="unit-cost">0.00 د.م.</b></div>
+      <div class="box"><span>السعر النهائي للقطعة الواحدة</span><b class="mono" id="unit-final">0.00 د.م.</b></div>
+      <div class="box"><span>إجمالي المبلغ المطلوب من الزبون</span><b class="mono" id="grand-total">0.00 د.م.</b></div>
+    </div>
+
+    <div class="final-actions">
+      <button class="fa-print" onclick="printQuote()">🖨️ طباعة عرض السعر</button>
+      <button class="fa-pdf" onclick="savePDF()">📄 حفظ كملف PDF</button>
+      <button class="fa-excel" onclick="exportExcel()">📊 تحميل كملف Excel</button>
+      <button class="fa-reset" onclick="resetAll()">↺ إعادة تعيين</button>
+    </div>
+  </section>
+
+  <footer class="foot">Importliya — جميع الحسابات تتم محلياً في متصفحك ولا يتم إرسال أي بيانات لأي خادم.</footer>
+</div>
+
+<div class="floating-total" id="floatTotal" onclick="scrollToFinal()">
+  السعر الحالي: <b class="mono" id="floatAmount">0.00 د.م.</b>
+</div>
+
+<!-- مكتبات إنشاء PDF (تُستخدم فقط عند الضغط على زر "حفظ كملف PDF") -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+/* ===========================================================
+   أدوات مساعدة عامة
+   =========================================================== */
+function num(id){
+  const el = document.getElementById(id);
+  if(!el) return 0;
+  const v = parseFloat(el.value);
+  return isNaN(v) ? 0 : v;
+}
+function fmt(n){
+  return n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function radioValue(name){
+  const el = document.querySelector('input[name="'+name+'"]:checked');
+  return el ? el.value : null;
+}
+
+/* تفعيل/إلغاء تفعيل ظهور المؤشر عند الحقول الفارغة المهمة */
+function markRequired(el){
+  const hint = el.parentElement.querySelector('.field-hint');
+  if(!el.value || parseFloat(el.value) <= 0){
+    el.classList.add('alert');
+    if(hint) hint.classList.add('show');
+  } else {
+    el.classList.remove('alert');
+    if(hint) hint.classList.remove('show');
+  }
+}
+
+/* طي/فتح البطاقات */
+function toggleStage(id){
+  document.getElementById(id).classList.toggle('collapsed');
+}
+
+/* تفعيل شكل الاختيار (chip) عند تغيير الراديو */
+document.querySelectorAll('.radio-row').forEach(row=>{
+  row.querySelectorAll('input[type=radio]').forEach(r=>{
+    r.addEventListener('change', ()=>{
+      row.querySelectorAll('.radio-chip').forEach(c=>c.classList.remove('active'));
+      r.closest('.radio-chip').classList.add('active');
+      calculateAll();
+    });
+  });
+});
+
+/* تغيير تسمية حقل الربح حسب النوع المختار */
+document.getElementById('profitTypeRow').addEventListener('change', ()=>{
+  const type = radioValue('profitType');
+  document.getElementById('profitLabel').textContent = type === 'percent' ? 'نسبة الربح %' : 'مبلغ الربح الثابت (د.م.)';
+});
+
+/* ===========================================================
+   محرك الحساب الرئيسي — يعمل مباشرة (Realtime) مع كل إدخال
+   =========================================================== */
+let appState = {};
+function calculateAll(){
+
+  /* --- المرحلة 1: الزبون --- */
+  const custName = document.getElementById('cu-name').value.trim();
+  const custLabel = custName ? ('السعر النهائي حتى باب منزل ' + custName) : 'السعر النهائي حتى باب منزل الزبون';
+  document.getElementById('final-customer-label').textContent = custLabel;
+  document.getElementById('sum-customer-label').textContent = custName ? ('السعر النهائي — ' + custName) : 'السعر النهائي حتى باب المنزل';
+
+  /* --- المرحلة 2: المنتج --- */
+  const qty = num('p-qty');
+  const unitPrice = num('p-unitprice');
+  const rate = num('p-rate');
+  const totalOrig = qty * unitPrice;
+  const totalMAD = totalOrig * rate;
+  document.getElementById('p-total-orig').textContent = fmt(totalOrig) + ' ' + document.getElementById('p-currency').value;
+  document.getElementById('p-total-mad').textContent = fmt(totalMAD);
+
+  /* --- المرحلة 2: تكاليف الصين --- */
+  const chinaTotal = ['c-transport','c-packaging','c-repackaging','c-storage','c-qc','c-commission','c-other']
+    .reduce((s,id)=>s+num(id),0);
+  document.getElementById('c-total').textContent = fmt(chinaTotal);
+
+  /* --- المرحلة 3: الشحن الدولي --- */
+  const shipTotal = ['s-cost','s-insurance','s-docs','s-companyfees','s-extra'].reduce((s,id)=>s+num(id),0);
+  document.getElementById('s-total').textContent = fmt(shipTotal);
+
+  /* --- المرحلة 4: الجمارك (القيمة الجمركية = قيمة المنتج + الشحن الدولي) --- */
+  const customsBase = totalMAD + shipTotal;
+  const dutyRate = num('d-dutyrate');
+  const tvaRate = num('d-tvarate');
+  const dutyAmount = customsBase * (dutyRate/100);
+  const tvaAmount = (customsBase + dutyAmount) * (tvaRate/100);
+  const customsFixed = ['d-clearance','d-port','d-storage','d-inspection','d-other'].reduce((s,id)=>s+num(id),0);
+  const customsTotal = dutyAmount + tvaAmount + customsFixed;
+  document.getElementById('d-total').textContent = fmt(customsTotal);
+
+  /* --- المرحلة 5: النقل داخل المغرب --- */
+  const localTotal = ['t-port','t-storage','t-repack','t-delivery','t-other'].reduce((s,id)=>s+num(id),0);
+  document.getElementById('t-total').textContent = fmt(localTotal);
+
+  /* --- المجموع الفرعي قبل الربح --- */
+  const subtotal = totalMAD + chinaTotal + shipTotal + customsTotal + localTotal;
+
+  /* --- المرحلة 6: الربح --- */
+  const profitType = radioValue('profitType');
+  const profitInput = num('pr-value');
+  const profit = profitType === 'percent' ? subtotal * (profitInput/100) : profitInput;
+  document.getElementById('pr-total').textContent = fmt(profit);
+
+  /* --- السعر النهائي --- */
+  const finalTotal = subtotal + profit;
+  const unitCost = qty > 0 ? subtotal/qty : 0;
+  const unitFinal = qty > 0 ? finalTotal/qty : 0;
+
+  /* تحديث اللوحة الجانبية */
+  document.getElementById('sum-product').textContent = fmt(totalMAD)+' د.م.';
+  document.getElementById('sum-china').textContent = fmt(chinaTotal)+' د.م.';
+  document.getElementById('sum-ship').textContent = fmt(shipTotal)+' د.م.';
+  document.getElementById('sum-customs').textContent = fmt(customsTotal)+' د.م.';
+  document.getElementById('sum-local').textContent = fmt(localTotal)+' د.م.';
+  document.getElementById('sum-subtotal').textContent = fmt(subtotal)+' د.م.';
+  document.getElementById('sum-profit').textContent = fmt(profit)+' د.م.';
+  document.getElementById('sum-final').textContent = fmt(finalTotal)+' د.م.';
+
+  /* تحديث البطاقة النهائية الكبيرة */
+  document.getElementById('fg-product').textContent = fmt(totalMAD)+' د.م.';
+  document.getElementById('fg-china').textContent = fmt(chinaTotal)+' د.م.';
+  document.getElementById('fg-ship').textContent = fmt(shipTotal)+' د.م.';
+  document.getElementById('fg-customs').textContent = fmt(customsTotal)+' د.م.';
+  document.getElementById('fg-local').textContent = fmt(localTotal)+' د.م.';
+  document.getElementById('fg-profit').textContent = fmt(profit)+' د.م.';
+  document.getElementById('finalAmount').textContent = fmt(finalTotal)+' د.م.';
+  document.getElementById('unit-cost').textContent = fmt(unitCost)+' د.م.';
+  document.getElementById('unit-final').textContent = fmt(unitFinal)+' د.م.';
+  document.getElementById('grand-total').textContent = fmt(finalTotal)+' د.م.';
+  document.getElementById('floatAmount').textContent = fmt(finalTotal)+' د.م.';
+
+  const pName = document.getElementById('p-name').value.trim();
+  document.getElementById('final-product-name').textContent = pName ? ('ملخص التكلفة لمنتج: ' + pName) : 'أدخل بيانات المنتج لعرض ملخص التكلفة الكامل';
+
+  /* --- تحديد المراحل المكتملة، شريط التقدم، وطريق الشحن --- */
+  const stagesComplete = [
+    custName.length>0,
+    qty>0 && unitPrice>0 && rate>0,
+    chinaTotal>0,
+    shipTotal>0,
+    (dutyRate>0 || tvaRate>0 || customsFixed>0),
+    localTotal>0,
+    profit>0
+  ];
+  let doneCount = 0;
+  stagesComplete.forEach((done,i)=>{
+    const stageEl = document.getElementById('stage'+(i+1));
+    if(done){ stageEl.classList.add('done'); doneCount++; }
+    else{ stageEl.classList.remove('done'); }
+  });
+  const pct = Math.round((doneCount/7)*100);
+  document.getElementById('progressBar').style.width = pct+'%';
+  document.getElementById('progressText').textContent = pct+'%';
+  document.getElementById('routeFill').style.width = pct+'%';
+  document.getElementById('routeShip').style.insetInlineStart = pct+'%';
+  document.getElementById('routePct').textContent = pct+'%';
+
+  /* إظهار الشارة العائمة فقط عندما يوجد سعر محتسب */
+  document.getElementById('floatTotal').classList.toggle('show', finalTotal>0);
+
+  /* حفظ آخر قيم محتسبة لاستخدامها في تصدير Excel */
+  appState = {
+    custName, custPhone: document.getElementById('cu-phone').value.trim(),
+    custCity: document.getElementById('cu-city').value.trim(),
+    custAddress: document.getElementById('cu-address').value.trim(),
+    pName: document.getElementById('p-name').value.trim(),
+    qty, unitPrice, currency: document.getElementById('p-currency').value, rate,
+    totalOrig, totalMAD, chinaTotal, shipType: radioValue('shipType'), shipTotal,
+    dutyRate, tvaRate, customsFixed, dutyAmount, tvaAmount, customsTotal,
+    localTotal, profitType, profitInput, profit, subtotal, finalTotal, unitCost, unitFinal
+  };
+}
+
+/* ربط الحساب بكل حقل إدخال في الصفحة */
+document.querySelectorAll('input, select').forEach(el=>{
+  el.addEventListener('input', calculateAll);
+  el.addEventListener('change', calculateAll);
+});
+
+/* ===========================================================
+   الأزرار: تمرير، طباعة، PDF، إعادة تعيين
+   =========================================================== */
+function scrollToFinal(){
+  document.getElementById('finalSection').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function printQuote(){
+  window.print();
+}
+
+function savePDF(){
+  const target = document.getElementById('finalSection');
+  const btn = event.target;
+  const originalText = btn.textContent;
+  btn.textContent = '⏳ جارٍ التحضير...';
+  html2canvas(target, {scale:2, backgroundColor:'#0C3652'}).then(canvas=>{
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','mm','a4');
+    const imgData = canvas.toDataURL('image/png');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const imgHeight = (canvas.height * pageWidth) / canvas.width;
+    pdf.addImage(imgData, 'PNG', 0, 10, pageWidth, imgHeight);
+    const productName = document.getElementById('p-name').value.trim() || 'عرض-سعر';
+    pdf.save(productName + '-تكلفة-الاستيراد.pdf');
+    btn.textContent = originalText;
+  }).catch(()=>{
+    alert('تعذر إنشاء ملف PDF، يرجى المحاولة عبر زر الطباعة واختيار "حفظ كـ PDF".');
+    btn.textContent = originalText;
+  });
+}
+
+function exportExcel(){
+  const s = appState;
+  const rows = [
+    ['Importliya — عرض سعر استيراد من الصين إلى المغرب'],
+    [],
+    ['معلومات الزبون'],
+    ['اسم الزبون', s.custName || '—'],
+    ['رقم الهاتف', s.custPhone || '—'],
+    ['المدينة', s.custCity || '—'],
+    ['العنوان الكامل', s.custAddress || '—'],
+    [],
+    ['معلومات المنتج'],
+    ['اسم المنتج', s.pName || '—'],
+    ['الكمية', s.qty],
+    ['سعر الوحدة', s.unitPrice],
+    ['العملة', s.currency],
+    ['سعر الصرف إلى الدرهم', s.rate],
+    ['إجمالي قيمة المنتج (بالعملة الأصلية)', s.totalOrig],
+    ['إجمالي قيمة المنتج (بالدرهم)', s.totalMAD],
+    [],
+    ['تكاليف داخل الصين'],
+    ['إجمالي تكاليف الصين (د.م.)', s.chinaTotal],
+    [],
+    ['الشحن الدولي'],
+    ['نوع الشحن', s.shipType],
+    ['إجمالي تكلفة الشحن الدولي (د.م.)', s.shipTotal],
+    [],
+    ['الجمارك المغربية'],
+    ['نسبة الرسوم الجمركية %', s.dutyRate],
+    ['نسبة TVA %', s.tvaRate],
+    ['القيمة الجمركية CIF (د.م.)', s.totalMAD + s.shipTotal],
+    ['مبلغ الرسوم الجمركية (د.م.)', s.dutyAmount],
+    ['مبلغ TVA (د.م.)', s.tvaAmount],
+    ['رسوم إضافية (تخليص+ميناء+تخزين+فحص) (د.م.)', s.customsFixed],
+    ['إجمالي الرسوم الجمركية (د.م.)', s.customsTotal],
+    [],
+    ['النقل داخل المغرب'],
+    ['إجمالي النقل داخل المغرب (د.م.)', s.localTotal],
+    [],
+    ['الربح'],
+    ['نوع الاحتساب', s.profitType==='percent' ? 'نسبة %' : 'مبلغ ثابت'],
+    ['القيمة المدخلة', s.profitInput],
+    ['الربح المحتسب (د.م.)', s.profit],
+    [],
+    ['الملخص النهائي'],
+    ['المجموع الفرعي قبل الربح (د.م.)', s.subtotal],
+    ['السعر النهائي حتى باب منزل الزبون (د.م.)', s.finalTotal],
+    ['تكلفة القطعة الواحدة (د.م.)', s.unitCost],
+    ['السعر النهائي للقطعة الواحدة (د.م.)', s.unitFinal],
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:42},{wch:24}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'عرض السعر');
+  const fileName = 'Importliya-' + (s.pName ? s.pName.replace(/\s+/g,'-') : 'عرض-سعر') + '.xlsx';
+  XLSX.writeFile(wb, fileName);
+}
+
+function resetAll(){
+  if(!confirm('هل أنت متأكد من إعادة تعيين جميع البيانات المدخلة؟')) return;
+  document.querySelectorAll('input[type=text], input[type=number]').forEach(el=>{el.value=''; el.classList.remove('alert');});
+  document.querySelectorAll('.field-hint').forEach(h=>h.classList.remove('show'));
+  document.getElementById('p-currency').selectedIndex = 0;
+  document.querySelector('input[name="shipType"][value="بحري"]').checked = true;
+  document.querySelector('input[name="profitType"][value="percent"]').checked = true;
+  document.getElementById('profitLabel').textContent = 'نسبة الربح %';
+  document.querySelectorAll('.radio-row').forEach(row=>{
+    row.querySelectorAll('.radio-chip').forEach((c,i)=>c.classList.toggle('active', i===0));
+  });
+  calculateAll();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* تشغيل أولي عند تحميل الصفحة */
+calculateAll();
+</script>
+</body>
+</html>
